@@ -25,7 +25,9 @@ function setup() {
   pg = createGraphics(width, height, SVG);
 
   // Create the slider
-  slider = createSlider(0, 20, 10);
+  slider = createSlider(0, 20, 5);
+  
+  
   slider.position(MARGIN_LEFT, 10);
   slider.input(redrawFareyDiagram);
 
@@ -98,14 +100,21 @@ function FareyPoints(n, pg) {
   let P = Farey(n);
   let strokeW = max(MIN_STROKE_WEIGHT, 1 / zoom);
   pg.strokeWeight(strokeW);
-
+  // text parameters
+  pg.textAlign(CENTER, CENTER);
+  pg.textSize(12 / zoom); // zoom level
+  pg.fill(0); // Set text color to black
+  //the text i will be writing 
+  let Fareyfractions = coolFarey(n+1);
   // Draw the points on the circle
   for (let i = 0; i < P.length; i++) {
     let x = centerX + r * cos(P[i]);
     let y = centerY - r * sin(P[i]);
     pg.fill(255,0,0);
     pg.noStroke();
+    
     pg.ellipse(x, y, max(1, 5 / zoom), max(1, 5 / zoom));
+    
   }
 
   // Calculate and draw intersections and new circles
@@ -126,6 +135,10 @@ function FareyPoints(n, pg) {
       pg.noFill();
       pg.stroke(0, 0, 0);
       pg.ellipse(intersection[0], intersection[1], distance * 2, distance * 2);
+      let textX = centerX + (r + 20) * cos(P[i]);
+      let textY = centerY - (r + 20) * sin(P[i]);
+      pg.fill(0,0,0,127); // color of text 
+      pg.text(Fareyfractions[i], textX, textY);
     }
   }
 }
@@ -176,4 +189,51 @@ function Farey(n) {
     equi.push((prevFarey[prevFarey.length - 1] + 2 * PI) / 2);
   }
   return equi;
+}
+
+////////////////////////////////////////////////////////////////////
+//farey pts array code (it was on python bf had to turn it in p5js)
+function gcd(a, b) {
+  if (!b) {
+      return a;
+  }
+  return gcd(b, a % b);
+}
+
+function simplestform(a, b) {
+  let g = gcd(a, b);
+  a = Math.floor(a / g);
+  b = Math.floor(b / g);
+  return [a, b];
+}
+
+function mediant(f, g) {
+  return simplestform(f[0] + g[0], f[1] + g[1]);
+}
+
+function coolerfraction(M) {
+  for (let k = 0; k < M.length; k++) {
+      M[k] = M[k][0] + "/" + M[k][1];
+  }
+  return M;
+}
+
+function FareyF(n) {
+  if (n === 1) {
+      return [[0, 1], [1, 1], [1, 0], [-1, 1]];
+  }
+  let x = FareyF(n - 1);
+  let f = new Array(2 * x.length);
+  for (let i = 0; i < x.length; i++) {
+      f[2 * i] = x[i];
+      if (i < x.length - 1) {
+          f[2 * i + 1] = [x[i][0] + x[i + 1][0], x[i + 1][1] + x[i][1]];
+      }
+  }
+  f[f.length - 1] = [x[x.length - 1][0] + x[0][0], x[x.length - 1][1] + x[0][1]];
+  return f;
+}
+
+function coolFarey(n) {
+  return coolerfraction(FareyF(n));
 }
