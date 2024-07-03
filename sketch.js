@@ -25,7 +25,7 @@ function setup() {
   pg = createGraphics(width, height, SVG);
 
   // Create the slider
-  slider = createSlider(0, 20, 5);
+  slider = createSlider(0, 20, 3);
   
   
   slider.position(MARGIN_LEFT, 10);
