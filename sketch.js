@@ -108,7 +108,7 @@ function FareyPoints(n, pg) {
   let Fareyfractions = coolFarey(n+1);
   // Draw the points on the circle
   for (let i = 0; i < P.length; i++) {
-    let x = centerX + r * cos(P[i]);
+    let x = centerX + r * cos(  );
     let y = centerY - r * sin(P[i]);
     pg.fill(255,0,0);
     pg.noStroke();
@@ -179,7 +179,7 @@ function Farey(n) {
     for (let i = 0; i < 4; i++) {
       equi.push((i * PI) / 2);
     }
-  } else {
+  } else {  
     let prevFarey = Farey(n - 1);
     for (let j = 0; j < prevFarey.length - 1; j++) {
       equi.push(prevFarey[j]);

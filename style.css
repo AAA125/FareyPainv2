@@ -6,3 +6,7 @@ html, body {
 canvas {
   display: block;
 }
+#content-container {
+  height: 500px;
+  overflow: auto;
+}
