@@ -96,14 +96,20 @@ class Point {
         this.y = -r * sin(this.angle()); 
     }
     updateFraction(){
+// in the future, i may need to consider numerators and denominators as pair of numbers 
 
         if( this.numerator* this.denominator > 0){
             this.numerator = abs(this.numerator);
             this.denominator = abs(this.denominator);
         }
-        else {
+        else if(this.numerator*this.denominator < 0 && this.denominator!=0) {
             this.numerator = -abs(this.numerator);
             this.denominator = abs(this.denominator);
+        }
+        else if (this.denominator == 0){
+            this.numerator = -abs(this.numerator);
+            this.denominator = 0; 
+
         }
     }
     addNeighbor(point) {
@@ -155,20 +161,33 @@ class FareyDiagram{
     
 
     generate(iterations) {
-        for (let i = 0; i < iterations; i++) {
-            let newPoints = [];
-            for (let j = 0; j < this.points.length; j++) {
-                let current = this.points[j];
-                let next = this.points[(j + 1) % this.points.length];
+    for (let i = 0; i < iterations; i++) {
+        let newPoints = [];
+        for (let j = 0; j < this.points.length; j++) {
+            let current = this.points[j];
+            let next = this.points[(j + 1) % this.points.length];
+             
+            newPoints.push(current);
+            
+            let a = current.numerator;
+            let b = current.denominator;
+            let c = next.numerator;
+            let d = next.denominator;
+
+            // Handle the case when next point is infinity (1/0)
+            if (d === 0) {
+                // Create a point with denominator n between current and infinity
+                let newPoint = new Point(a + this.n, b);
+                newPoints.push(newPoint);
                 
-                newPoints.push(current);
-                
-                let a = current.numerator;
-                let b = current.denominator;
-                let c = next.numerator;
-                let d = next.denominator;
-                
-                let newPoint = new Point(a + this.n * c, b + this.n * d);
+                // Update graph structure
+                current.addNeighbor(newPoint);
+                next.addNeighbor(newPoint);
+                newPoint.addNeighbor(current);
+                newPoint.addNeighbor(next);
+            } else {
+                // Regular case
+                let newPoint = new Point(a + this.n * c, b + this.n * d);                
                 newPoints.push(newPoint);
                 
                 // Update graph structure
@@ -177,9 +196,48 @@ class FareyDiagram{
                 newPoint.addNeighbor(current);
                 newPoint.addNeighbor(next);
             }
-            this.points = newPoints;
         }
+        this.points = newPoints;
     }
+}generate(iterations) {
+    for (let i = 0; i < iterations; i++) {
+        let newPoints = [];
+        let currentLength = this.points.length;
+        
+        for (let j = 0; j < currentLength; j++) {
+            let current = this.points[j];
+            let next = this.points[(j + 1) % currentLength];
+             
+            newPoints.push(current);
+            
+            let a = current.numerator;
+            let b = current.denominator;
+            let c = next.numerator;
+            let d = next.denominator;
+
+            // Create new point
+            let newPoint;
+            if (d === 0) {
+                // Handle the case when next point is infinity (1/0)
+                newPoint = new Point(a + this.n, b);
+            } else {
+                newPoint = new Point(a + c, b + d);
+            }
+            
+            // Only add the new point if it's not already in the sequence
+            if (!this.points.some(p => p.numerator === newPoint.numerator && p.denominator === newPoint.denominator)) {
+                newPoints.push(newPoint);
+                
+                // Update graph structure
+                current.addNeighbor(newPoint);
+                next.addNeighbor(newPoint);
+                newPoint.addNeighbor(current);
+                newPoint.addNeighbor(next);
+            }
+        }
+        this.points = newPoints;
+    }
+}
     
     draw(pg){
         pg.stroke(0);
@@ -229,7 +287,7 @@ function redrawFareyDiagram() {
     pg.clear();
     fareyDiagram.generate(iterations);
     fareyDiagram.draw(pg);
-    //drawIntersections(pg);
+    drawIntersections(pg);
 }
 
 function draw() {
