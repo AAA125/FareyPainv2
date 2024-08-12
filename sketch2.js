@@ -14,51 +14,46 @@ const MARGIN_BOTTOM = 20;
 const MARGIN_LEFT = 20;
 const MARGIN_RIGHT = 20;
 //graph theory letsgooo
-class Graph { 
-    numberNodes; 
-    adjacencyMatrix; 
-  
-    constructor(numberNodes){ 
-      this.numberNodes = numberNodes; 
-  
-      this.adjacencyMatrix = []; 
-  
-      for(let i = 0; i < this.numberNodes; i++){ 
-        this.adjacencyMatrix[i] = new Array(this.numberNodes).fill(0); 
-      }
-  
+class Graph {
+    constructor(numberNodes) {
+        this.numberNodes = numberNodes;
+        this.adjacencyMatrix = Array(numberNodes).fill().map(() => Array(numberNodes).fill(0));
     }
-  
-    addEdge(node1, node2){ 
-  
-      this.adjacencyMatrix[node1][node2] = 1; 
-      this.adjacencyMatrix[node2][node1] = 1; 
-  
-    }
-  
-    getNeighboors(node){ 
-       return this.adjacencyMatrix[node]; 
-    }
-  
-    hasEdge(node1, node2){ 
-  
-      if(node1 >= 0 && node1 < this.numberNodes && node2 >= 0 && node2 < this.numberNodes){ 
-        return this.adjacenMatrix[node1][node2] === 1 && this.adjacenMatrix[node2][node1] === 1; 
-      }
-  
-      return false; 
-    }
-  
-    removeEdge(node1, node2){ 
-      if(node1 >= 0 && node1 < this.numberNodes && node2 >= 0 && node2 < this.numberNodes){ 
-        this.adjacencyMatrix[node1][node2] = 0; 
-        this.adjacencyMatrix[node2][node1] = 0; 
-      }
-  
-    }
-  
-  }
 
+    addEdge(node1, node2) {
+        if (this.isValidNode(node1) && this.isValidNode(node2)) {
+            this.adjacencyMatrix[node1][node2] = 1;
+            this.adjacencyMatrix[node2][node1] = 1;
+        }
+    }
+
+    getNeighbors(node) {
+        if (this.isValidNode(node)) {
+            return this.adjacencyMatrix[node]
+                .map((value, index) => value === 1 ? index : -1)
+                .filter(index => index !== -1);
+        }
+        return [];
+    }
+
+    hasEdge(node1, node2) {
+        if (this.isValidNode(node1) && this.isValidNode(node2)) {
+            return this.adjacencyMatrix[node1][node2] === 1;
+        }
+        return false;
+    }
+
+    removeEdge(node1, node2) {
+        if (this.isValidNode(node1) && this.isValidNode(node2)) {
+            this.adjacencyMatrix[node1][node2] = 0;
+            this.adjacencyMatrix[node2][node1] = 0;
+        }
+    }
+
+    isValidNode(node) {
+        return node >= 0 && node < this.numberNodes;
+    }
+}
 
 class Point {
     constructor(numerator, denominator) {
@@ -146,9 +141,9 @@ class FareyDiagram{
         if (this.n === 1) {
             this.points = [new Point(0, 1), new Point(1, 1),new Point(1,0),new Point(-1,1)];
             this.points[0].addNeighbor(this.points[1]);
-            this.points[1].addNeighbor(this.points[0]);
             this.points[1].addNeighbor(this.points[2]);
             this.points[2].addNeighbor(this.points[3]);
+            this.points[3].addNeighbor(this.points[0]);
         } else if (this.n === 2) {
             this.points = [new Point(-1, 1), new Point(1, 1)];
             this.points[0].addNeighbor(this.points[1]);
@@ -156,28 +151,24 @@ class FareyDiagram{
         }
         
     }
-
+    generate() {
+    let newPoints = [];
+    let currentLength = this.points.length;
     
-    
-
-    generate(iterations) {
-    for (let i = 0; i < iterations; i++) {
-        let newPoints = [];
-        for (let j = 0; j < this.points.length; j++) {
-            let current = this.points[j];
-            let next = this.points[(j + 1) % this.points.length];
-             
-            newPoints.push(current);
+    for (let j = 0; j < currentLength; j++) {
+        let current = this.points[j];
+        let next = this.points[(j + 1) % currentLength];
+        
+        newPoints.push(current);
+        
+        // Handle the case when next point is infinity (1/0)
+        if (next.denominator === 0) {
+            // Create a point with denominator n between current and infinity
+            let newNumerator = current.numerator + this.n;
+            let newDenominator = current.denominator;
             
-            let a = current.numerator;
-            let b = current.denominator;
-            let c = next.numerator;
-            let d = next.denominator;
-
-            // Handle the case when next point is infinity (1/0)
-            if (d === 0) {
-                // Create a point with denominator n between current and infinity
-                let newPoint = new Point(a + this.n, b);
+            if (!this.points.some(p => p.numerator === newNumerator && p.denominator === newDenominator)) {
+                let newPoint = new Point(newNumerator, newDenominator);
                 newPoints.push(newPoint);
                 
                 // Update graph structure
@@ -185,9 +176,15 @@ class FareyDiagram{
                 next.addNeighbor(newPoint);
                 newPoint.addNeighbor(current);
                 newPoint.addNeighbor(next);
-            } else {
-                // Regular case
-                let newPoint = new Point(a + this.n * c, b + this.n * d);                
+            }
+        } else {
+            // Regular case
+            let newNumerator = current.numerator + next.numerator;
+            let newDenominator = current.denominator + next.denominator;
+            
+            // Only add the new point if it's not already in the sequence
+            if (!this.points.some(p => p.numerator === newNumerator && p.denominator === newDenominator)) {
+                let newPoint = new Point(newNumerator, newDenominator);
                 newPoints.push(newPoint);
                 
                 // Update graph structure
@@ -197,9 +194,22 @@ class FareyDiagram{
                 newPoint.addNeighbor(next);
             }
         }
-        this.points = newPoints;
     }
-}generate(iterations) {
+    this.points = newPoints;
+}
+     draw(pg){
+        pg.stroke(0);
+        pg.strokeWeight(max(MIN_STROKE_WEIGHT, 1 / zoom));
+        pg.noFill();
+        pg.ellipse(centerX, centerY, r * 2, r * 2);
+
+        for (let point of this.points) {
+            point.draw(pg);
+        }
+    }
+   
+}
+/*generate(iterations) {
     for (let i = 0; i < iterations; i++) {
         let newPoints = [];
         let currentLength = this.points.length;
@@ -220,6 +230,7 @@ class FareyDiagram{
             if (d === 0) {
                 // Handle the case when next point is infinity (1/0)
                 newPoint = new Point(a + this.n, b);
+                
             } else {
                 newPoint = new Point(a + c, b + d);
             }
@@ -233,6 +244,7 @@ class FareyDiagram{
                 next.addNeighbor(newPoint);
                 newPoint.addNeighbor(current);
                 newPoint.addNeighbor(next);
+                console.log(newPoint);
             }
         }
         this.points = newPoints;
@@ -251,7 +263,7 @@ class FareyDiagram{
     }
    
 }
-
+*/
 function setup() {
     let canvas = createCanvas(windowWidth - MARGIN_LEFT - MARGIN_RIGHT, windowHeight - MARGIN_TOP - MARGIN_BOTTOM);
     canvas.parent('sketch-holder');
@@ -285,11 +297,14 @@ function redrawFareyDiagram() {
     let iterations = slider.value();
     
     pg.clear();
-    fareyDiagram.generate(iterations);
-    fareyDiagram.draw(pg);
-    drawIntersections(pg);
+    fareyDiagram = new FareyDiagram(select.value() === 'n = 2' ? 2 : 1);
+    
+    for (let i = 0; i < iterations; i++) {
+        fareyDiagram.generate();
+    }
+    
+        fareyDiagram.draw(pg);
 }
-
 function draw() {
     clear();
     push();
